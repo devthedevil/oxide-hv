@@ -1,0 +1,21 @@
+{
+  "name": "oxide-wasm",
+  "type": "module",
+  "description": "wasm-bindgen bindings exposing the oxide-engine hypervisor simulation to the browser dashboard.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devthedevil/oxide-hv"
+  },
+  "files": [
+    "oxide_wasm_bg.wasm",
+    "oxide_wasm.js",
+    "oxide_wasm.d.ts"
+  ],
+  "main": "oxide_wasm.js",
+  "types": "oxide_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

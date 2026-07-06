@@ -1,0 +1,21 @@
+# Rust
+/target
+
+# Node / Next.js
+web/node_modules
+web/.next
+web/next-env.d.ts
+web/*.tsbuildinfo
+web/npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code harness config (local dev tooling, not part of the project)
+.claude/
+
+# Criterion / benchmark artifacts
+crates/engine/target
+**/criterion/
