@@ -47,11 +47,10 @@ cargo test --workspace
 cargo bench -p oxide-engine
 
 # 2. Rebuild the wasm package after touching crates/engine or crates/wasm
-cd crates/wasm
-wasm-pack build --target web --out-dir ../../web/public/pkg
+./scripts/wasm-pkg.sh build
 
 # 3. Run the dashboard
-cd ../../web
+cd web
 npm install
 npm run dev   # http://localhost:3000
 ```
@@ -63,7 +62,11 @@ npm run dev   # http://localhost:3000
 - **Property-based tests** (`proptest`) assert capacity invariants hold after arbitrary sequences of ticks/bursts/failures/recoveries.
 - **Benchmarks** (`criterion`) measure scheduling throughput as host count scales from 16 to 256, and batch-placement latency for autoscale bursts of 50–500 VMs.
 
-CI (`.github/workflows/ci.yml`) runs all of the above plus a WASM build check and a Next.js typecheck/build on every push.
+CI (`.github/workflows/ci.yml`) runs all of the above plus a Next.js typecheck/build on every push.
+
+### Keeping the deployed wasm artifact honest
+
+`web/public/pkg` is a **committed build artifact** — Vercel deploys it as-is and never runs `wasm-pack` itself, so a stale binary there would silently ship an outdated simulation to production with no build failure anywhere. Since the compiled `.wasm` isn't bit-for-bit reproducible across builds even from identical source, CI can't just diff the binary; instead `scripts/wasm-pkg.sh` hashes the source inputs (`crates/engine/src`, `crates/wasm/src`, their `Cargo.toml`s, and the workspace lockfile) and records that hash in `web/public/pkg/.source-hash`. CI's `wasm` job recomputes the hash from current source and fails the build if it doesn't match — so forgetting to rebuild after a source change is caught automatically instead of silently drifting into production.
 
 ## License
 

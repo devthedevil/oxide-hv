@@ -35,7 +35,7 @@ jobs:
         run: cargo bench -p oxide-engine -- --test
 
   wasm:
-    name: WASM build
+    name: WASM build + drift check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,11 +48,21 @@ jobs:
 
       - uses: jetli/wasm-pack-action@v0.4.0
         with:
-          version: "latest"
+          version: "v0.15.0"
 
-      - name: Build oxide-wasm package
+      - name: Build oxide-wasm package (compile check, scratch dir)
         working-directory: crates/wasm
-        run: wasm-pack build --target web --out-dir ../../web/public/pkg
+        run: wasm-pack build --target web --out-dir /tmp/pkg-check
+
+      # Vercel deploys web/public/pkg as a committed artifact and never runs
+      # wasm-pack itself, so a stale binary there would silently ship an old
+      # simulation to production with no build failure anywhere. The wasm
+      # binary isn't bit-reproducible across builds even from identical
+      # source, so we can't diff it directly — instead this hashes the
+      # source inputs and compares against the hash recorded alongside the
+      # artifact when it was last generated (see scripts/wasm-pkg.sh).
+      - name: Verify committed web/public/pkg matches current source
+        run: ./scripts/wasm-pkg.sh verify
 
   web:
     name: Web (typecheck + build)
@@ -60,20 +70,6 @@ jobs:
     needs: wasm
     steps:
       - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - uses: Swatinem/rust-cache@v2
-
-      - uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: "latest"
-
-      - name: Build oxide-wasm package
-        working-directory: crates/wasm
-        run: wasm-pack build --target web --out-dir ../../web/public/pkg
 
       - uses: actions/setup-node@v4
         with:
